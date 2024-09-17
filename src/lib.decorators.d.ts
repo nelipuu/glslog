@@ -1,0 +1,1 @@
+../node_modules/typescript/lib/lib.decorators.d.ts

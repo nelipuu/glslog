@@ -1,0 +1,10 @@
+node_modules/
+dist/
+lib/
+src/Swizzle.ts
+src/libs.ts
+package-lock.json
+*.lock
+*.log.*
+*.log
+*.tgz

@@ -1,0 +1,14 @@
+node_modules/
+src/
+lib/
+pen/
+vite.config.ts
+package-lock.json
+index.html
+run
+.*
+*.code-workspace
+*.lock
+*.log.*
+*.log
+*.tgz

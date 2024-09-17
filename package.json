@@ -1,0 +1,17 @@
+{
+  "name": "glslog",
+  "version": "0.0.5",
+  "license": "MIT",
+  "author": "Juha Järvi",
+  "main": "dist/index.js",
+  "scripts": {
+    "prepare": "node src/patch.cjs && tsc src/Swizzle.ts && node src/generate-libs.js && tsc -p src && vite build",
+    "test": "node dist/test.js src/pen.vert",
+    "start": "vite"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.5",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.6"
+  }
+}

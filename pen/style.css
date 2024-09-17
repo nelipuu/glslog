@@ -1,0 +1,28 @@
+html,
+body {
+	margin: 0;
+	background-color: rgb(6, 6, 6);
+}
+
+#log,
+#gl {
+	position: absolute;
+	top: 8px;
+	width: calc(50vw - 12px);
+	height: calc(100vh - 16px);
+	box-sizing: border-box;
+}
+
+#log {
+	left: 8px;
+	background-color: rgb(29, 30, 34);
+	color-scheme: dark;
+}
+
+#gl {
+	left: calc(50vw + 4px);
+}
+
+textarea {
+	padding: 8px;
+}

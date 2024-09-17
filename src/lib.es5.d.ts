@@ -1,0 +1,1 @@
+../node_modules/typescript/lib/lib.es5.d.ts
