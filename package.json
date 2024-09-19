@@ -3,11 +3,18 @@
   "version": "0.0.8",
   "license": "MIT",
   "author": "Juha Järvi",
+  "homepage": "https://github.com/nelipuu/glslog/#readme",
+  "bugs": {
+    "url": "https://github.com/nelipuu/glslog/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:nelipuu/glslog.git"
+  },
   "main": "dist/index.js",
   "browser": "dist/browser.js",
   "scripts": {
     "prepare": "node src/patch.cjs && tsc -d --emitDeclarationOnly --outDir lib src/Swizzle.ts && node src/generate-libs.js && tsc -p src && vite build && mv dist/index.js dist/browser.js && rollup -c",
-    "test": "node dist/test.js src/pen.vert",
     "start": "vite"
   },
   "devDependencies": {
