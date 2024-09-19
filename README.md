@@ -1,4 +1,3 @@
-
 # glslog
 
 A utility for converting WebGL 1.0 GLSL shaders to JavaScript/TypeScript and debugging WebGL rendering contexts.
@@ -23,6 +22,17 @@ npm install --save glslog
 ```
 
 ## Usage
+
+### Testing locally
+
+Run:
+
+```bash
+npm start
+```
+
+Then open:
+http://localhost:5173/pen/
 
 ### Converting GLSL to JavaScript or TypeScript
 
@@ -103,4 +113,5 @@ Wraps a WebGLRenderingContext to intercept and debug WebGL API calls.
 ## License
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
+
 The distribution package also includes the TypeScript compiler, which is under its own free license.

@@ -4,7 +4,9 @@ import '../dist/browser';
 const canvas = document.getElementById('gl');
 const log = document.getElementById('log');
 const gl = wrapContext(canvas.getContext('webgl'), (...args) => {
+	// Log into debug textbox and JavaScript console.
 	log.value += '\n' + args.map(JSON.stringify).join(' ');
+	console.log(...args);
 });
 
 var vs = `
@@ -91,7 +93,7 @@ function createQuadMesh(width, height) {
 	return { coords, indices };
 }
 
-const meshSize = 9;
+const meshSize = 13;
 
 const { coords, indices } = createQuadMesh(meshSize, meshSize);
 
