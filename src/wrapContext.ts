@@ -1,5 +1,5 @@
 import { glsl2js } from './glsl2js';
-import type { Vec, Mat, vec2, vec3, vec4, $setPrint, $saveCheckpoint, $loadCheckpoint } from './webgl';
+import type { Vec4, Vec, Mat, vec2, vec3, vec4, $setPrint, $saveCheckpoint, $loadCheckpoint } from './webgl';
 
 type FunctionOnly<Type> = {
 	[Key in keyof Type as Type[Key] extends (...args: any[]) => any ? Key : never]: Type[Key];
@@ -48,14 +48,6 @@ interface AttributeMeta {
 	enabled: boolean;
 }
 
-interface EnabledAttribute {
-	name: string,
-	data: AttributeData,
-	size: number,
-	offset: number,
-	stride: number
-}
-
 interface ProgramMeta {
 	program: WebGLProgram;
 	vertex?: ShaderMeta;
@@ -73,10 +65,118 @@ interface BufferMeta {
 	data: BufferSource | null;
 }
 
+interface Vertex {
+	drawCallNum: number;
+	x: number;
+	y: number;
+}
+
 type Value = number | Vec | Mat;
+
+function positionOverlayCanvas(overlay: HTMLCanvasElement, reference: HTMLElement) {
+	const wnd = overlay.ownerDocument.defaultView!;
+
+	const rect = reference.getBoundingClientRect();
+	overlay.style.left = rect.left + wnd.scrollX + 'px';
+	overlay.style.top = rect.top + wnd.scrollY + 'px';
+	overlay.style.width = rect.width + 'px';
+	overlay.style.height = rect.height + 'px';
+
+	const width = ~~(rect.width * wnd.devicePixelRatio);
+	const height = ~~(rect.height * wnd.devicePixelRatio);
+	if(overlay.width != width) overlay.width = rect.width * wnd.devicePixelRatio;
+	if(overlay.height != height) overlay.height = rect.height * wnd.devicePixelRatio;
+
+	return { width, height };
+}
+
+function drawLines(
+	gc: CanvasRenderingContext2D,
+	width: number,
+	height: number,
+	vertices: Vertex[],
+	indices: AttributeData,
+	stride: number,
+	loop: boolean
+) {
+	const count = indices.length;
+	let doMove = 1;
+
+	gc.beginPath();
+
+	for(let n = 0; n < count - 1; n += stride) {
+		const i = indices[n];
+		const j = indices[n + 1];
+
+		const x0 = vertices[i].x * width;
+		const y0 = vertices[i].y * height;
+
+		const x1 = vertices[j].x * width;
+		const y1 = vertices[j].y * height;
+
+		if(doMove) gc.moveTo(x0, y0);
+		gc.lineTo(x1, y1);
+
+		doMove = stride - 1;
+	}
+
+	if(loop) gc.closePath();
+	gc.stroke();
+}
+
+function drawTriangles(
+	gc: CanvasRenderingContext2D,
+	width: number,
+	height: number,
+	vertices: Vertex[],
+	indices: AttributeData,
+	stride: number,
+	strideScale: number,
+	windingMask: number
+) {
+	const count = indices.length - 2;
+
+	for(let n = 0; n < count; n += stride) {
+		const i = indices[n * strideScale];
+		const j = indices[n + 1 + (n & windingMask)];
+		const k = indices[n + 2 - (n & windingMask)];
+
+		const x0 = vertices[i].x * width;
+		const x1 = vertices[j].x * width;
+		const x2 = vertices[k].x * width;
+
+		const y0 = vertices[i].y * height;
+		const y1 = vertices[j].y * height;
+		const y2 = vertices[k].y * height;
+
+		if(
+			(x0 == x1 && y0 == y1) ||
+			(x0 == x2 && y0 == y2) ||
+			(x1 == x2 && y1 == y2)
+		) continue;
+
+		gc.beginPath();
+		gc.moveTo(x0, y0);
+		gc.lineTo(x1, y1);
+		gc.lineTo(x2, y2);
+		gc.closePath();
+		gc.stroke();
+	}
+}
 
 export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) => void) {
 	if(!gl) return gl;
+
+	const glCanvas = gl.canvas;
+	const doc = glCanvas instanceof HTMLCanvasElement && glCanvas.ownerDocument;
+	const debugCanvas = doc && doc.createElement('canvas');
+	const gc = debugCanvas && debugCanvas.getContext('2d');
+
+	if(gc) {
+		debugCanvas.style.position = 'absolute';
+		debugCanvas.style.pointerEvents = 'none';
+		doc.body.appendChild(debugCanvas);
+	}
 
 	const DebugContext = function DebugContext() { } as unknown as { new(): WebGLRenderingContext };
 	DebugContext.prototype = gl;
@@ -109,24 +209,26 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 	const bufferBound: Record<number, WebGLBuffer | null> = {};
 	const bufferMeta = new WeakMap<WebGLBuffer, BufferMeta>();
 
+	const floatAttributes: AttributeMeta[] = [];
+	const vectorAttributes: AttributeMeta[] = [];
+	const vertices: Vertex[] = [];
+	let drawCallNum = 0;
+
 	function getCurrentData(target: number, kind: number): AttributeData | null {
 		const meta = bufferMeta.get(bufferBound[target]!);
 		let data = meta && meta.data;
+		if(!data) return null;
 
-		if(data) {
-			let offset = 0;
-			let length = data.byteLength;
+		let offset = 0;
+		let length = data.byteLength;
 
-			if(!(data instanceof ArrayBuffer)) {
-				offset = data.byteOffset;
-				data = data.buffer;
-			}
-
-			const info = typeInfo[kind];
-			return new info.array(data, offset, length / info.size);
+		if(!(data instanceof ArrayBuffer)) {
+			offset = data.byteOffset;
+			data = data.buffer;
 		}
 
-		return null;
+		const info = typeInfo[kind];
+		return new info.array(data, offset, length / info.size);
 	}
 
 	const implementation: Partial<WebGLRenderingContext> = {
@@ -292,8 +394,10 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 			const storage = module.$storage;
 			module.$setPrint(print);
 
-			// Save arena allocator state.
+			// Save arena allocator state before setting uniforms just in case they allocate memory.
 			const afterConstants = module.$saveCheckpoint();
+
+			// Set uniforms.
 			const uniformLocation = currentProgram!.uniformLocation;
 			const uniformData = currentProgram!.uniformData;
 
@@ -307,60 +411,83 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 				}
 			}
 
+			// Save arena allocator state.
 			const afterUniforms = module.$saveCheckpoint();
-			const vertices: Record<number, any> = {};
-			const indexCount = indices.length;
 
+			// List enabled attributes.
 			const attributes = currentProgram!.attributes;
 			const attributeCount = attributes.length;
-
-			const floatAttributes: EnabledAttribute[] = [];
-			const vectorAttributes: EnabledAttribute[] = [];
+			const indexCount = indices.length;
+			let floatCount = 0;
+			let vectorCount = 0;
 
 			for(let n = 0; n < attributeCount; ++n) {
 				const attribute = attributes[n];
 
 				if(attribute.enabled && attribute.name && attribute.data) {
-					(attribute.size > 1 ? vectorAttributes : floatAttributes).push({
-						name: attribute.name,
-						data: attribute.data.subarray(),
-						size: attribute.size,
-						offset: attribute.offset,
-						stride: attribute.stride
-					});
+					if(attribute.size > 1) {
+						vectorAttributes[vectorCount++] = attribute;
+					} else {
+						floatAttributes[floatCount++] = attribute;
+					}
 				}
 			}
 
+			++drawCallNum;
+
 			for(let n = 0; n < indexCount; ++n) {
 				const index = indices[n];
+				const vertex = vertices[index] || (vertices[index] = { drawCallNum: 0 } as Vertex);
 
-				if(!vertices[index]) {
+				if(vertex.drawCallNum < drawCallNum) {
 					// Free shader resources allocated since the last vertex.
 					module.$loadCheckpoint(afterUniforms);
 
-					for(const attribute of floatAttributes) {
-						(storage.attribute[attribute.name] as number) = attribute.data[attribute.offset];
-						attribute.offset += attribute.stride;
+					for(let m = 0; m < floatCount; ++m) {
+						const attribute = floatAttributes[m];
+						(storage.attribute[attribute.name!] as number) = attribute.data![attribute.offset + index * attribute.stride];
 					}
 
-					for(const attribute of vectorAttributes) {
-						const src = attribute.data;
-						const dst = (storage.attribute[attribute.name] as Vec | Mat).data;
-						let p = attribute.offset;
+					for(let m = 0; m < vectorCount; ++m) {
+						const attribute = vectorAttributes[m];
+						const src = attribute.data!;
+						const dst = (storage.attribute[attribute.name!] as Vec | Mat).data;
+						let p = attribute.offset + index * attribute.stride;
 						let q = 0;
 						while(q < count) dst[q++] = src[p++];
-
-						attribute.offset += attribute.stride;
 					}
 
 					module.main();
 
-					vertices[index] = true;
+					// TODO: Capture varyings
+					const position = (storage.internal.gl_Position as Vec4).data;
+					const w = position[3] * 2;
+					vertex.x = 0.5 + position[0] / w;
+					vertex.y = 0.5 - position[1] / w;
+
+					vertex.drawCallNum = drawCallNum;
 				}
 			}
 
 			// Free shader resources allocated during the draw call.
 			module.$loadCheckpoint(afterConstants);
+
+			if(!debugCanvas || !gc) return;
+
+			const { width, height } = positionOverlayCanvas(debugCanvas, glCanvas);
+			console.log(vertices);
+
+			gc.strokeStyle = 'black';
+			gc.lineWidth = 1;
+
+			switch(mode) {
+				case gl.LINES: drawLines(gc, width, height, vertices, indices, 2, false); break;
+				case gl.LINE_STRIP: drawLines(gc, width, height, vertices, indices, 1, false); break;
+				case gl.LINE_LOOP: drawLines(gc, width, height, vertices, indices, 1, true); break;
+				case gl.TRIANGLES: drawTriangles(gc, width, height, vertices, indices, 3, 1, 0); break;
+				case gl.TRIANGLE_STRIP: drawTriangles(gc, width, height, vertices, indices, 1, 1, 1); break;
+				case gl.TRIANGLE_FAN: drawTriangles(gc, width, height, vertices, indices, 1, 0, 0); break;
+			}
 		}
 	};
 
