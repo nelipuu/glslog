@@ -149,6 +149,7 @@ function drawTriangles(
 		const y1 = vertices[j].y * height;
 		const y2 = vertices[k].y * height;
 
+		// Skip degenerate triangles.
 		if(
 			(x0 == x1 && y0 == y1) ||
 			(x0 == x2 && y0 == y2) ||

@@ -1,4 +1,4 @@
-import '../src/index';
+import '../dist/browser';
 
 /** @type HTMLCanvasElement */
 const canvas = document.getElementById('gl');
@@ -91,14 +91,16 @@ function createQuadMesh(width, height) {
 	return { coords, indices };
 }
 
-const { coords, indices } = createQuadMesh(13, 13);
+const meshSize = 9;
+
+const { coords, indices } = createQuadMesh(meshSize, meshSize);
 
 gl.clearColor(0, 0, 0, 1);
 gl.enable(gl.DEPTH_TEST);
 
 gl.useProgram(program);
 
-gl.uniform2f(gl.getUniformLocation(program, 'uSize'), 12, 12);
+gl.uniform2f(gl.getUniformLocation(program, 'uSize'), meshSize - 1, meshSize - 1);
 
 let attribute = gl.getAttribLocation(program, 'aPosition');
 gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());

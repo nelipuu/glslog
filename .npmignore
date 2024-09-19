@@ -1,7 +1,9 @@
 node_modules/
 src/
-lib/
+lib/*
+!lib/typescript.cjs
 pen/
+rollup.config.js
 vite.config.ts
 package-lock.json
 index.html

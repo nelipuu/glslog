@@ -25,7 +25,7 @@ import {
 	getLineAndCharacterOfPosition,
 	flattenDiagnosticMessageText, */
 	ModuleKind
-} from 'typescript';
+} from '../lib/typescript.cjs';
 
 import type { Vec } from './webgl';
 import { VFS } from './vfs';
