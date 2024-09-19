@@ -476,7 +476,6 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 			if(!debugCanvas || !gc) return;
 
 			const { width, height } = positionOverlayCanvas(debugCanvas, glCanvas);
-			console.log(vertices);
 
 			gc.strokeStyle = 'black';
 			gc.lineWidth = 1;
