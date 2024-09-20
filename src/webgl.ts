@@ -569,20 +569,28 @@ export function normalize(v: Vec) {
 	return v.allocMap((n) => n * scale);
 }
 
-// TODO faceforward
-
+export function faceforward(u: Vec, v: Vec, r: Vec) {
+	return dot(r, v) < 0 ? u : u.negate();
+}
 export function reflect(u: Vec, v: Vec) {
 	const scale = 2 * dot(u, v);
 	return u.allocMap((n, i) => n - scale * v.data[i]);
 }
 
-// TODO refract
+export function refract(u: Vec, v: Vec, eta: number) {
+	const dotUV = dot(u, v);
+	const k = 1 - eta * eta * (1 - dotUV * dotUV);
+	if(k < 0) return u.alloc(0);
 
-// Matrix Functons
+	const r = eta * dotUV + Math.sqrt(k);
+	return u.allocMap((n, i) => n * eta - v.data[i] * r);
+}
+
+// Matrix Functions
 
 export function matrixCompMult(m: Mat, n: Mat) { const data = n.data; return m.allocMap((a, i) => a * data[i]); }
 
-// Vector Relational Functons
+// Vector Relational Functions
 
 export const lessThan = wrap2((a, b) => +(a < b));
 export const lessThanEqual = wrap2((a, b) => +(a <= b));
