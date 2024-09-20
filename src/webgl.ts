@@ -2,8 +2,6 @@ import type { Swizzle } from './Swizzle.js';
 
 export type MainReturn<Func extends (...args: any) => any> = ReturnType<Func> extends [infer First, ...any] ? First : never;
 
-// The transpiler automatically makes a copy when passing a vector or matrix as a parameter.
-// export const $copy = (n) => n && typeof n == 'object' ? n.copy() : n;
 export const $copy = <Type>(n: Type) => n;
 
 class Pool {
@@ -27,8 +25,6 @@ class Pool {
 	offset = 0;
 
 }
-
-// TypeScript versions of WebGL builtins for calling from transpiled shader code during debugging.
 
 export class Vec {
 
@@ -564,6 +560,7 @@ export function cross(u: Vec3, v: Vec3): Vec3 {
 		a[0] * b[1] - a[1] * b[0]
 	);
 }
+
 export function normalize(v: Vec) {
 	const scale = 1 / Math.sqrt(dot(v, v));
 	return v.allocMap((n) => n * scale);
@@ -572,6 +569,7 @@ export function normalize(v: Vec) {
 export function faceforward(u: Vec, v: Vec, r: Vec) {
 	return dot(r, v) < 0 ? u : u.negate();
 }
+
 export function reflect(u: Vec, v: Vec) {
 	const scale = 2 * dot(u, v);
 	return u.allocMap((n, i) => n - scale * v.data[i]);
