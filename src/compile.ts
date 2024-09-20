@@ -111,10 +111,6 @@ function createHost(
 		getDirectories: () => [],
 		readDirectory: (path: string) => vfs.readDir(path) || [],
 
-		// deleteFile?(path: string): void;
-		// createHash?(data: string): string;
-		// createSHA256Hash?(data: string): string;
-
 		exit: () => { throw new Error('Cannot exit'); },
 
 		// CompilerHost members
