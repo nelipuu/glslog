@@ -1,11 +1,6 @@
 import { glsl2js } from './glsl2js';
-import type { Vec4, Vec, Mat, vec2, vec3, vec4, $setPrint, $saveCheckpoint, $loadCheckpoint } from '../lib/webgl';
-
-import { System } from './System';
-
-import './before-webgl';
-import '../lib/webgl';
-import './after-webgl';
+import { Vec4, Vec, Mat, vec2, vec3, vec4, $setPrint, $saveCheckpoint, $loadCheckpoint } from './webgl';
+import * as webgl from './webgl';
 
 type FunctionOnly<Type> = {
 	[Key in keyof Type as Type[Key] extends (...args: any[]) => any ? Key : never]: Type[Key];
@@ -213,11 +208,6 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 	const vertices: Vertex[] = [];
 	let drawCallNum = 0;
 
-	const webglModule = System.importSync('./webgl');
-	const $setPrint = webglModule['$setPrint'];
-	const $saveCheckpoint = webglModule['$saveCheckpoint'];
-	const $loadCheckpoint = webglModule['$loadCheckpoint'];
-
 	function getCurrentData(target: number, kind: number): AttributeData | null {
 		const meta = bufferMeta.get(bufferBound[target]!);
 		let data = meta && meta.data;
@@ -268,7 +258,8 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 			const meta = shaderMeta.get(shader)!;
 
 			try {
-				meta.module = eval('(function(System){return ' + glsl2js(meta.source!) + '})')(System) as ShaderModule;
+				meta.module = {} as ShaderModule;
+				eval('(function(require, exports){' + glsl2js(meta.source!) + '})')(() => webgl, meta.module);
 			} catch(err) {
 				console.error(err);
 			}

@@ -27,7 +27,7 @@ import {
 	ModuleKind
 } from '../lib/typescript.cjs';
 
-import type { Vec } from '../lib/webgl';
+import type { Vec } from './webgl';
 import { VFS } from './vfs';
 
 const textDecoder = new TextDecoder();
@@ -44,7 +44,7 @@ const tsOptions: CompilerOptions = {
 	// Don't check types in declarations.
 	skipLibCheck: true,
 
-	module: ModuleKind.System,
+	module: ModuleKind.CommonJS,
 
 	// Support spread, Promise.prototype.finally (async/await is ES2017).
 	target: ScriptTarget.ES2018,

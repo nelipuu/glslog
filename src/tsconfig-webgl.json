@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"esModuleInterop": true,
+		"lib": [
+			"es5",
+			"es2015.core",
+			"es2015.iterable"
+		],
+		"module": "system",
+		"strict": true,
+		"types": [],
+		"outDir": "../lib"
+	},
+	"files": [
+		"webgl.ts"
+	]
+}
