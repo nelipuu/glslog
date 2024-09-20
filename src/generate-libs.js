@@ -12,7 +12,7 @@ for(const key of [
 	'lib.es2015.symbol.d.ts',
 	'lib.es5.d.ts',
 	'../lib/Swizzle.d.ts',
-	'webgl.ts'
+	'../lib/webgl.d.ts'
 ]) {
 	files[path.basename(key)] = fs.readFileSync(path.resolve(__dirname, key), 'utf-8');
 }

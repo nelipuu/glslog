@@ -14,7 +14,7 @@
   "main": "dist/index.js",
   "browser": "dist/browser.js",
   "scripts": {
-    "prepare": "node src/patch.cjs && tsc -d --emitDeclarationOnly --outDir lib src/Swizzle.ts && node src/generate-libs.js && tsc -p src && vite build && mv dist/index.js dist/browser.js && rollup -c",
+    "prepare": "node src/patch.cjs && tsc -p src/tsconfig-webgl.json && node src/generate-libs.js && tsc -p src && vite build && mv dist/index.js dist/browser.js && rollup -c",
     "start": "vite"
   },
   "devDependencies": {

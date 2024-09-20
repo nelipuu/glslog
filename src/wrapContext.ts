@@ -1,5 +1,11 @@
 import { glsl2js } from './glsl2js';
-import type { Vec4, Vec, Mat, vec2, vec3, vec4, $setPrint, $saveCheckpoint, $loadCheckpoint } from './webgl';
+import type { Vec4, Vec, Mat, vec2, vec3, vec4, $setPrint, $saveCheckpoint, $loadCheckpoint } from '../lib/webgl';
+
+import { System } from './System';
+
+import './before-webgl';
+import '../lib/webgl';
+import './after-webgl';
 
 type FunctionOnly<Type> = {
 	[Key in keyof Type as Type[Key] extends (...args: any[]) => any ? Key : never]: Type[Key];
@@ -17,14 +23,6 @@ interface Storage {
 
 interface ShaderModule {
 	$storage: Storage;
-	vec2: typeof vec2;
-	vec3: typeof vec3;
-	vec4: typeof vec4;
-
-	$setPrint: typeof $setPrint;
-	$saveCheckpoint: typeof $saveCheckpoint;
-	$loadCheckpoint: typeof $loadCheckpoint;
-
 	main(): void;
 }
 
@@ -215,6 +213,11 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 	const vertices: Vertex[] = [];
 	let drawCallNum = 0;
 
+	const webglModule = System.importSync('./webgl');
+	const $setPrint = webglModule['$setPrint'];
+	const $saveCheckpoint = webglModule['$saveCheckpoint'];
+	const $loadCheckpoint = webglModule['$loadCheckpoint'];
+
 	function getCurrentData(target: number, kind: number): AttributeData | null {
 		const meta = bufferMeta.get(bufferBound[target]!);
 		let data = meta && meta.data;
@@ -265,9 +268,7 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 			const meta = shaderMeta.get(shader)!;
 
 			try {
-				const module = {} as ShaderModule;
-				eval('(function(exports){' + glsl2js(meta.source!) + '})')(module);
-				meta.module = module;
+				meta.module = eval('(function(System){return ' + glsl2js(meta.source!) + '})')(System) as ShaderModule;
 			} catch(err) {
 				console.error(err);
 			}
@@ -393,10 +394,10 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 
 			const module = currentProgram!.vertex!.module!;
 			const storage = module.$storage;
-			module.$setPrint(print);
+			$setPrint(print);
 
 			// Save arena allocator state before setting uniforms just in case they allocate memory.
-			const afterConstants = module.$saveCheckpoint();
+			const afterConstants = $saveCheckpoint();
 
 			// Set uniforms.
 			const uniformLocation = currentProgram!.uniformLocation;
@@ -413,7 +414,7 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 			}
 
 			// Save arena allocator state.
-			const afterUniforms = module.$saveCheckpoint();
+			const afterUniforms = $saveCheckpoint();
 
 			// List enabled attributes.
 			const attributes = currentProgram!.attributes;
@@ -442,7 +443,7 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 
 				if(vertex.drawCallNum < drawCallNum) {
 					// Free shader resources allocated since the last vertex.
-					module.$loadCheckpoint(afterUniforms);
+					$loadCheckpoint(afterUniforms);
 
 					for(let m = 0; m < floatCount; ++m) {
 						const attribute = floatAttributes[m];
@@ -471,7 +472,7 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 			}
 
 			// Free shader resources allocated during the draw call.
-			module.$loadCheckpoint(afterConstants);
+			$loadCheckpoint(afterConstants);
 
 			if(!debugCanvas || !gc) return;
 

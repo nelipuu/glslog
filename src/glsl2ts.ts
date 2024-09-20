@@ -410,7 +410,8 @@ function transformCode(code: string, storage: Storage) {
 	return edits;
 }
 
-/* import {
+const prologue = `// Automatically transpiled from WebGL
+import {
 	MainReturn, $copy,
 	Vec2, Vec3, Vec4, Vec,
 	vec2, vec3, vec4,
@@ -428,9 +429,8 @@ function transformCode(code: string, storage: Storage) {
 	matrixCompMult,
 	lessThan, lessThanEqual, greaterThan, greaterThanEqual, equal, notEqual, any, all, not,
 	print
-} from './webgl'; */
+} from './webgl';
 
-const prologue = `// Automatically transpiled from WebGL
 let gl_Position = vec4(0);
 let gl_PointSize: number;
 let gl_FragCoord = vec4(0);
