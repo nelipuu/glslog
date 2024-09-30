@@ -380,8 +380,12 @@ function transformCode(code: string, storage: Storage) {
 							}
 
 							if(c != '(' && name) {
-								if(qualifier && !meta && /vec|mat/.test(kind)) {
-									edits.push({ start: p, length: 0, replace: ' = ' + kind + '(0)' });
+								if(qualifier && !meta && token != '=' && /vec|mat/.test(kind)) {
+									edits.push({
+										start: p,
+										length: 0,
+										replace: ' = ' + kind + (/mat/.test(kind) ? '(1)' : '(0)')
+									});
 								} else {
 									edits.push({ start: p, length: 0, replace: ': ' + (jsKind[kind] || 'any') });
 								}
