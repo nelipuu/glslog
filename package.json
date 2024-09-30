@@ -1,6 +1,6 @@
 {
   "name": "glslog",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "license": "MIT",
   "author": "Juha Järvi",
   "homepage": "https://github.com/nelipuu/glslog/#readme",
@@ -18,9 +18,8 @@
     "start": "vite"
   },
   "devDependencies": {
-    "@types/node": "^22.5.5",
-    "rollup": "^4.22.0",
+    "@types/node": "^22.7.4",
     "typescript": "^5.6.2",
-    "vite": "^5.4.6"
+    "vite": "^5.4.8"
   }
 }
