@@ -198,6 +198,13 @@ const binary: Partial<Record<BinaryOperator, keyof Vec>> = {
 	[SyntaxKind.SlashToken]: 'div'
 };
 
+const assign: Partial<Record<BinaryOperator, keyof Vec>> = {
+	[SyntaxKind.PlusEqualsToken]: 'add',
+	[SyntaxKind.MinusEqualsToken]: 'sub',
+	[SyntaxKind.AsteriskEqualsToken]: 'mul',
+	[SyntaxKind.SlashEqualsToken]: 'div'
+};
+
 const commutative: Record<string, keyof Vec | true> = {
 	'add': true,
 	'mul': true,
@@ -234,6 +241,7 @@ function vectorOperators(checker: TypeChecker) {
 			}
 		} else if(isBinaryExpression(node)) {
 			let op = binary[node.operatorToken.kind];
+			let opAssign = assign[node.operatorToken.kind];
 			let left = node.left;
 			let right = node.right;
 			if(
@@ -255,13 +263,30 @@ function vectorOperators(checker: TypeChecker) {
 				}
 
 				const call = factory.createCallExpression(
-					factory.createPropertyAccessExpression(left, op!),
+					factory.createPropertyAccessExpression(left, op),
 					void 0,
 					[right]
 				);
 
 				vectors.add(call);
 				return call;
+			} else if(opAssign && isVector(vectors, checker, left) && isVectorOperand(vectors, checker, right)) {
+				// Create a new vector and assign, to support assigning to swizzled vectors.
+				const call = factory.createCallExpression(
+					factory.createPropertyAccessExpression(left, opAssign),
+					void 0,
+					[right]
+				);
+
+				node = factory.updateBinaryExpression(
+					node,
+					left,
+					factory.createToken(SyntaxKind.EqualsToken),
+					call
+				);
+
+				vectors.add(node);
+				return node;
 			} else if(node.operatorToken.kind == SyntaxKind.EqualsToken && isIdentifier(right) && isVector(vectors, checker, right)) {
 				const call = factory.createCallExpression(
 					factory.createPropertyAccessExpression(right, 'copy'),
