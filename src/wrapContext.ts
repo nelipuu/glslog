@@ -158,7 +158,7 @@ function drawTriangles(
 	}
 }
 
-export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) => void) {
+export function wrapContext(gl: WebGLRenderingContext | null, print: (...args: any[]) => void) {
 	if(!gl) return gl;
 
 	const glCanvas = gl.canvas;
@@ -256,11 +256,13 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 		compileShader(shader) {
 			gl.compileShader(shader);
 			const meta = shaderMeta.get(shader)!;
+			const code = '(function(require, exports, gl, gc){' + glsl2js(meta.source!) + '})';
 
 			try {
 				meta.module = {} as ShaderModule;
-				eval('(function(require, exports){' + glsl2js(meta.source!) + '})')(() => webgl, meta.module);
+				eval(code)(() => webgl, meta.module, gl, gc);
 			} catch(err) {
+				console.error(code);
 				console.error(err);
 			}
 		},
@@ -380,6 +382,11 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 		},
 
 		drawElements(mode, count, kind, offset) {
+			let width = 0;
+			let height = 0;
+			// Position overlay first, so shaders can draw debug data on it.
+			if(debugCanvas && gc) ({ width, height } = positionOverlayCanvas(debugCanvas, glCanvas));
+
 			gl.drawElements(mode, count, kind, offset);
 			let indices = getCurrentData(gl.ELEMENT_ARRAY_BUFFER, kind)!;
 
@@ -466,8 +473,6 @@ export function wrapContext(gl: WebGLRenderingContext, print: (...args: any[]) =
 			$loadCheckpoint(afterConstants);
 
 			if(!debugCanvas || !gc) return;
-
-			const { width, height } = positionOverlayCanvas(debugCanvas, glCanvas);
 
 			gc.strokeStyle = 'black';
 			gc.lineWidth = 1;
