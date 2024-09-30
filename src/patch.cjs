@@ -6,13 +6,11 @@ const fs = require('fs');
 const key = require.resolve('typescript');
 
 let code = fs.readFileSync(key, 'utf-8').replace(
-	/(function checkBinaryLikeExpressionWorker[^{]+\{)/, [
-		'$1',
-		'const maybeVector = [leftType, rightType].map((kind) => [kind, kind.intrinsicName || kind.checker.typeToString(kind)])',
-		'for(const [kind, name] of maybeVector) if(/^[IU]?Vec/.test(name)) return kind;',
-		'for(const [kind, name] of maybeVector) if(/^Mat/.test(name)) return kind;',
-		''
-	].join('\n')
+	/(function checkBinaryLikeExpressionWorker[^{]+\{)/,
+	'$1\nfor(const kind of [leftType, rightType]) if(/^[IU]?Vec|^Mat/.test(kind.intrinsicName || kind.checker.typeToString(kind))) return kind;\n'
+).replace(
+	/(function checkPrefixUnaryExpression[^{]+\{[ \t\n]*const operandType[ =]+[^;]+;)/,
+	'$1\nif(/^[IU]?Vec|^Mat/.test(operandType.intrinsicName || operandType.checker.typeToString(operandType))) return operandType;\n'
 );
 
 fs.mkdirSync(path.resolve(__dirname, '../lib'), { recursive: true });
