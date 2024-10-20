@@ -380,7 +380,11 @@ export function wrapContext(gl: WebGLRenderingContext | null, print: (...args: a
 				enabled: true
 			};
 		},
+		clear(mask: number) {
+			gl.clear(mask);
 
+			if(gc) gc.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+		},
 		drawElements(mode, count, kind, offset) {
 			let width = 0;
 			let height = 0;
