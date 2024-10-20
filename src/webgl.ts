@@ -262,7 +262,7 @@ export class Mat {
 		} else {
 			for(const arg of args) {
 				if(typeof arg === 'number') {
-					for(let i = size; i--;) data[p++] = arg;
+					data[p++] = arg;
 				} else {
 					for(let i = 0; i < size;) data[p++] = arg.data[i++];
 				}
