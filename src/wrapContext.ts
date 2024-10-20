@@ -319,6 +319,55 @@ export function wrapContext(gl: WebGLRenderingContext | null, print: (...args: a
 			data[2] = z;
 			data[3] = w;
 		},
+		uniform2fv(location, value: Float32Array | number[]) {
+			gl.uniform2fv(location, value);
+
+			const data = currentProgram!.uniformData.get(location!)!;
+			data[0] = value[0];
+			data[1] = value[1];
+		},
+		uniform3fv(location, value: Float32Array | number[]) {
+			gl.uniform3fv(location, value);
+
+			const data = currentProgram!.uniformData.get(location!)!;
+			data[0] = value[0];
+			data[1] = value[1];
+			data[2] = value[2];
+		},
+		uniform4fv(location, value: Float32Array | number[]) {
+			gl.uniform4fv(location, value);
+
+			const data = currentProgram!.uniformData.get(location!)!;
+			data[0] = value[0];
+			data[1] = value[1];
+			data[2] = value[2];
+			data[3] = value[3];
+		},
+		uniformMatrix2fv(location, transpose: boolean, value: Float32Array | number[]) {
+			gl.uniformMatrix2fv(location, transpose, value);
+
+			const data = currentProgram!.uniformData.get(location!)!;
+			data[0] = value[0];
+			data[1] = value[1];
+			data[2] = value[2];
+			data[3] = value[3];
+		},
+		uniformMatrix3fv(location, transpose: boolean, value: Float32Array | number[]) {
+			gl.uniformMatrix3fv(location, transpose, value);
+
+			const data = currentProgram!.uniformData.get(location!)!;
+			let i = 9;
+
+			while(i--) data[i] = value[i];
+		},
+		uniformMatrix4fv(location, transpose: boolean, value: Float32Array | number[]) {
+			gl.uniformMatrix4fv(location, transpose, value);
+
+			const data = currentProgram!.uniformData.get(location!)!;
+			let i = 16;
+
+			while(i--) data[i] = value[i];
+		},
 		bindBuffer(target, buffer) {
 			gl.bindBuffer(target, buffer);
 			bufferBound[target] = buffer;
