@@ -142,9 +142,11 @@ export function bvec4(...args: (Vec | number)[]) { return UVec4.prototype.alloc(
 function initVec(kinds: (typeof Vec)[], arrayKind: typeof Float32Array | typeof Int32Array | typeof Uint32Array) {
 	kinds.map((kind, n) => {
 		const size = n + 2;
+		const pool = new Pool(arrayKind);
 
-		kind.prototype.pool = new Pool(arrayKind);
+		kind.prototype.pool = pool;
 		kind.prototype.arena = [];
+		kind.prototype.data = pool.alloc32(size);
 
 		kind.prototype.size = size;
 		kind.prototype.kind = kind;
@@ -302,7 +304,7 @@ export class Mat {
 			return this.vecKind.prototype.allocMap((_, i) => {
 				let sum = 0;
 
-				for(let j = 0, p = i * size; j < size;) sum += a[p++] * b[j++];
+				for(let j = 0, p = i; j < size; p += size) sum += a[p] * b[j++];
 
 				return sum;
 			});
@@ -353,9 +355,11 @@ export function mat4x4(...args: number[]) { return Mat4.prototype.alloc(...args)
 
 [Mat2, Mat3, Mat4].map((kind, n) => {
 	const size = n + 2;
+	const pool = new Pool(Float32Array);
 
-	kind.prototype.pool = new Pool(Float32Array);
+	kind.prototype.pool = pool;
 	kind.prototype.arena = [];
+	kind.prototype.data = pool.alloc32(size * size);
 
 	kind.prototype.size = size;
 	kind.prototype.kind = kind;
